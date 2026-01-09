@@ -2,13 +2,14 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>テトリス</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
@@ -18,12 +19,15 @@
             justify-content: center;
             align-items: center;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            touch-action: manipulation;
         }
 
         .game-container {
             display: flex;
             gap: 20px;
-            padding: 20px;
+            padding: 10px;
+            max-width: 100vw;
         }
 
         .main-area {
@@ -34,9 +38,9 @@
 
         h1 {
             color: #00d4ff;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
             text-shadow: 0 0 10px #00d4ff;
-            font-size: 2.5rem;
+            font-size: 2rem;
         }
 
         canvas {
@@ -47,27 +51,27 @@
         .side-panel {
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 10px;
         }
 
         .info-box {
             background: rgba(0, 0, 0, 0.5);
             border: 2px solid #00d4ff;
             border-radius: 10px;
-            padding: 15px;
-            min-width: 150px;
+            padding: 10px;
+            min-width: 100px;
         }
 
         .info-box h3 {
             color: #00d4ff;
-            font-size: 0.9rem;
-            margin-bottom: 10px;
+            font-size: 0.8rem;
+            margin-bottom: 5px;
             text-transform: uppercase;
         }
 
         .info-box p {
             color: #fff;
-            font-size: 1.5rem;
+            font-size: 1.2rem;
             font-weight: bold;
         }
 
@@ -75,26 +79,26 @@
             border: 2px solid #00d4ff;
         }
 
-        .controls {
+        .controls-info {
             background: rgba(0, 0, 0, 0.5);
             border: 2px solid #00d4ff;
             border-radius: 10px;
-            padding: 15px;
+            padding: 10px;
         }
 
-        .controls h3 {
+        .controls-info h3 {
             color: #00d4ff;
-            font-size: 0.9rem;
-            margin-bottom: 10px;
-        }
-
-        .controls p {
-            color: #aaa;
             font-size: 0.8rem;
-            margin: 5px 0;
+            margin-bottom: 5px;
         }
 
-        .controls span {
+        .controls-info p {
+            color: #aaa;
+            font-size: 0.7rem;
+            margin: 3px 0;
+        }
+
+        .controls-info span {
             color: #fff;
         }
 
@@ -102,12 +106,12 @@
             background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
             border: none;
             color: #000;
-            padding: 15px 40px;
-            font-size: 1.2rem;
+            padding: 12px 30px;
+            font-size: 1.1rem;
             font-weight: bold;
             border-radius: 5px;
             cursor: pointer;
-            margin-top: 20px;
+            margin-top: 10px;
             transition: transform 0.2s, box-shadow 0.2s;
         }
 
@@ -117,39 +121,179 @@
         }
 
         .game-over {
-            position: absolute;
+            position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.9);
+            background: rgba(0, 0, 0, 0.95);
             border: 3px solid #ff0066;
             border-radius: 15px;
-            padding: 40px;
+            padding: 30px;
             text-align: center;
             display: none;
+            z-index: 100;
         }
 
         .game-over h2 {
             color: #ff0066;
-            font-size: 2rem;
-            margin-bottom: 20px;
+            font-size: 1.8rem;
+            margin-bottom: 15px;
         }
 
         .game-over p {
             color: #fff;
-            font-size: 1.2rem;
-            margin-bottom: 20px;
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+        }
+
+        .game-over button {
+            background: linear-gradient(135deg, #ff0066 0%, #cc0052 100%);
+            border: none;
+            color: #fff;
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        /* タッチコントロール */
+        .touch-controls {
+            display: none;
+            width: 100%;
+            max-width: 320px;
+            margin-top: 10px;
+        }
+
+        .touch-row {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 5px 0;
+        }
+
+        .touch-btn {
+            width: 70px;
+            height: 60px;
+            background: linear-gradient(135deg, #2a2a4a 0%, #1a1a3a 100%);
+            border: 2px solid #00d4ff;
+            border-radius: 10px;
+            color: #00d4ff;
+            font-size: 1.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            transition: all 0.1s;
+        }
+
+        .touch-btn:active {
+            background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+            color: #000;
+            transform: scale(0.95);
+        }
+
+        .touch-btn.wide {
+            width: 150px;
+        }
+
+        .touch-btn.rotate {
+            background: linear-gradient(135deg, #3a2a5a 0%, #2a1a4a 100%);
+            border-color: #a000f0;
+            color: #a000f0;
+        }
+
+        .touch-btn.rotate:active {
+            background: linear-gradient(135deg, #a000f0 0%, #8000c0 100%);
+            color: #fff;
+        }
+
+        .touch-btn.drop {
+            background: linear-gradient(135deg, #5a2a2a 0%, #4a1a1a 100%);
+            border-color: #ff0066;
+            color: #ff0066;
+        }
+
+        .touch-btn.drop:active {
+            background: linear-gradient(135deg, #ff0066 0%, #cc0052 100%);
+            color: #fff;
+        }
+
+        /* スマホ用レイアウト */
+        @media (max-width: 600px) {
+            .game-container {
+                flex-direction: column;
+                align-items: center;
+                padding: 5px;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+                margin-bottom: 5px;
+            }
+
+            .side-panel {
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 8px;
+            }
+
+            .info-box {
+                padding: 8px;
+                min-width: 70px;
+            }
+
+            .info-box h3 {
+                font-size: 0.7rem;
+            }
+
+            .info-box p {
+                font-size: 1rem;
+            }
+
+            #next-canvas {
+                width: 80px;
+                height: 80px;
+            }
+
+            .controls-info {
+                display: none;
+            }
+
+            .touch-controls {
+                display: block;
+            }
+
+            #start-btn {
+                padding: 10px 25px;
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 350px) {
+            #game-canvas {
+                width: 250px;
+                height: 500px;
+            }
+
+            .touch-btn {
+                width: 60px;
+                height: 50px;
+                font-size: 1.2rem;
+            }
+
+            .touch-btn.wide {
+                width: 130px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="game-container">
-        <div class="main-area">
-            <h1>TETRIS</h1>
-            <canvas id="game-canvas" width="300" height="600"></canvas>
-            <button id="start-btn">START</button>
-        </div>
-        <div class="side-panel">
+        <div class="side-panel mobile-top">
             <div class="info-box">
                 <h3>Score</h3>
                 <p id="score">0</p>
@@ -164,9 +308,31 @@
             </div>
             <div class="info-box">
                 <h3>Next</h3>
-                <canvas id="next-canvas" width="120" height="120"></canvas>
+                <canvas id="next-canvas" width="80" height="80"></canvas>
             </div>
-            <div class="controls">
+        </div>
+        <div class="main-area">
+            <h1>TETRIS</h1>
+            <canvas id="game-canvas" width="300" height="600"></canvas>
+            <button id="start-btn">START</button>
+
+            <!-- タッチコントロール -->
+            <div class="touch-controls" id="touch-controls">
+                <div class="touch-row">
+                    <button class="touch-btn rotate" id="btn-rotate">&#x21BB;</button>
+                </div>
+                <div class="touch-row">
+                    <button class="touch-btn" id="btn-left">&#x25C0;</button>
+                    <button class="touch-btn" id="btn-down">&#x25BC;</button>
+                    <button class="touch-btn" id="btn-right">&#x25B6;</button>
+                </div>
+                <div class="touch-row">
+                    <button class="touch-btn wide drop" id="btn-drop">DROP</button>
+                </div>
+            </div>
+        </div>
+        <div class="side-panel desktop-only">
+            <div class="controls-info">
                 <h3>Controls</h3>
                 <p><span>←→</span> Move</p>
                 <p><span>↑</span> Rotate</p>
@@ -179,14 +345,14 @@
     <div class="game-over" id="game-over">
         <h2>GAME OVER</h2>
         <p>Final Score: <span id="final-score">0</span></p>
-        <button id="restart-btn" style="background: linear-gradient(135deg, #ff0066 0%, #cc0052 100%); border: none; color: #fff; padding: 15px 40px; font-size: 1.2rem; font-weight: bold; border-radius: 5px; cursor: pointer;">RESTART</button>
+        <button id="restart-btn">RESTART</button>
     </div>
 
     <script>
         // ゲーム設定
         const COLS = 10;
         const ROWS = 20;
-        const BLOCK_SIZE = 30;
+        let BLOCK_SIZE = 30;
         const COLORS = [
             null,
             '#00f0f0', // I - シアン
@@ -221,6 +387,7 @@
         let gameLoop = null;
         let isPaused = false;
         let isGameOver = false;
+        let isGameStarted = false;
         let dropInterval = 1000;
 
         // 初期化
@@ -230,12 +397,144 @@
             nextCanvas = document.getElementById('next-canvas');
             nextCtx = nextCanvas.getContext('2d');
 
+            // キャンバスサイズの調整
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+
             document.getElementById('start-btn').addEventListener('click', startGame);
             document.getElementById('restart-btn').addEventListener('click', startGame);
             document.addEventListener('keydown', handleKeyPress);
 
+            // タッチコントロールの設定
+            setupTouchControls();
+
             resetBoard();
             drawBoard();
+        }
+
+        // キャンバスリサイズ
+        function resizeCanvas() {
+            const maxHeight = window.innerHeight - 250;
+            const maxWidth = window.innerWidth - 40;
+
+            let newHeight = Math.min(600, maxHeight);
+            let newWidth = newHeight / 2;
+
+            if (newWidth > maxWidth) {
+                newWidth = maxWidth;
+                newHeight = newWidth * 2;
+            }
+
+            canvas.style.width = newWidth + 'px';
+            canvas.style.height = newHeight + 'px';
+
+            BLOCK_SIZE = canvas.width / COLS;
+        }
+
+        // タッチコントロールの設定
+        function setupTouchControls() {
+            const btnLeft = document.getElementById('btn-left');
+            const btnRight = document.getElementById('btn-right');
+            const btnDown = document.getElementById('btn-down');
+            const btnRotate = document.getElementById('btn-rotate');
+            const btnDrop = document.getElementById('btn-drop');
+
+            // 長押し用の変数
+            let moveInterval = null;
+            let downInterval = null;
+
+            // 左ボタン
+            btnLeft.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                moveLeft();
+                moveInterval = setInterval(moveLeft, 100);
+            });
+            btnLeft.addEventListener('touchend', () => clearInterval(moveInterval));
+            btnLeft.addEventListener('touchcancel', () => clearInterval(moveInterval));
+
+            // 右ボタン
+            btnRight.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                moveRight();
+                moveInterval = setInterval(moveRight, 100);
+            });
+            btnRight.addEventListener('touchend', () => clearInterval(moveInterval));
+            btnRight.addEventListener('touchcancel', () => clearInterval(moveInterval));
+
+            // 下ボタン
+            btnDown.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                moveDown();
+                downInterval = setInterval(moveDown, 50);
+            });
+            btnDown.addEventListener('touchend', () => clearInterval(downInterval));
+            btnDown.addEventListener('touchcancel', () => clearInterval(downInterval));
+
+            // 回転ボタン
+            btnRotate.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                rotatePiece();
+            });
+
+            // ドロップボタン
+            btnDrop.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                hardDrop();
+            });
+
+            // クリックイベント（PCでのテスト用）
+            btnLeft.addEventListener('click', moveLeft);
+            btnRight.addEventListener('click', moveRight);
+            btnDown.addEventListener('click', moveDown);
+            btnRotate.addEventListener('click', rotatePiece);
+            btnDrop.addEventListener('click', hardDrop);
+        }
+
+        // 移動関数
+        function moveLeft() {
+            if (!isGameStarted || isGameOver || isPaused || !currentPiece) return;
+            if (!collision(currentPiece.x - 1, currentPiece.y, currentPiece.shape)) {
+                currentPiece.x--;
+                draw();
+            }
+        }
+
+        function moveRight() {
+            if (!isGameStarted || isGameOver || isPaused || !currentPiece) return;
+            if (!collision(currentPiece.x + 1, currentPiece.y, currentPiece.shape)) {
+                currentPiece.x++;
+                draw();
+            }
+        }
+
+        function moveDown() {
+            if (!isGameStarted || isGameOver || isPaused || !currentPiece) return;
+            if (!collision(currentPiece.x, currentPiece.y + 1, currentPiece.shape)) {
+                currentPiece.y++;
+                score += 1;
+                updateScore();
+                draw();
+            }
+        }
+
+        function rotatePiece() {
+            if (!isGameStarted || isGameOver || isPaused || !currentPiece) return;
+            const rotated = rotate(currentPiece.shape);
+            if (!collision(currentPiece.x, currentPiece.y, rotated)) {
+                currentPiece.shape = rotated;
+                draw();
+            }
+        }
+
+        function hardDrop() {
+            if (!isGameStarted || isGameOver || isPaused || !currentPiece) return;
+            while (!collision(currentPiece.x, currentPiece.y + 1, currentPiece.shape)) {
+                currentPiece.y++;
+                score += 2;
+            }
+            updateScore();
+            lockPiece();
+            draw();
         }
 
         // ボードをリセット
@@ -252,6 +551,7 @@
             dropInterval = 1000;
             isPaused = false;
             isGameOver = false;
+            isGameStarted = true;
 
             updateScore();
             document.getElementById('game-over').style.display = 'none';
@@ -391,45 +691,31 @@
 
         // キー入力処理
         function handleKeyPress(e) {
-            if (isGameOver) return;
+            if (isGameOver || !isGameStarted) return;
 
             switch (e.keyCode) {
                 case 37: // 左
-                    if (!collision(currentPiece.x - 1, currentPiece.y, currentPiece.shape)) {
-                        currentPiece.x--;
-                    }
+                    moveLeft();
                     break;
                 case 39: // 右
-                    if (!collision(currentPiece.x + 1, currentPiece.y, currentPiece.shape)) {
-                        currentPiece.x++;
-                    }
+                    moveRight();
                     break;
                 case 40: // 下
-                    if (!collision(currentPiece.x, currentPiece.y + 1, currentPiece.shape)) {
-                        currentPiece.y++;
-                        score += 1;
-                        updateScore();
-                    }
+                    e.preventDefault();
+                    moveDown();
                     break;
                 case 38: // 上（回転）
-                    const rotated = rotate(currentPiece.shape);
-                    if (!collision(currentPiece.x, currentPiece.y, rotated)) {
-                        currentPiece.shape = rotated;
-                    }
+                    e.preventDefault();
+                    rotatePiece();
                     break;
                 case 32: // スペース（ハードドロップ）
-                    while (!collision(currentPiece.x, currentPiece.y + 1, currentPiece.shape)) {
-                        currentPiece.y++;
-                        score += 2;
-                    }
-                    updateScore();
-                    lockPiece();
+                    e.preventDefault();
+                    hardDrop();
                     break;
                 case 80: // P（ポーズ）
                     isPaused = !isPaused;
                     break;
             }
-            draw();
         }
 
         // ゲームオーバー
@@ -493,19 +779,23 @@
 
         // 次のピース描画
         function drawNextPiece() {
+            const nextBlockSize = nextCanvas.width / 4;
             nextCtx.fillStyle = '#0f0f23';
             nextCtx.fillRect(0, 0, nextCanvas.width, nextCanvas.height);
 
             if (!nextPiece) return;
 
             const color = COLORS[nextPiece.type];
-            const offsetX = (nextCanvas.width / BLOCK_SIZE - nextPiece.shape[0].length) / 2;
-            const offsetY = (nextCanvas.height / BLOCK_SIZE - nextPiece.shape.length) / 2;
+            const offsetX = (4 - nextPiece.shape[0].length) / 2;
+            const offsetY = (4 - nextPiece.shape.length) / 2;
 
             for (let row = 0; row < nextPiece.shape.length; row++) {
                 for (let col = 0; col < nextPiece.shape[row].length; col++) {
                     if (nextPiece.shape[row][col]) {
-                        drawBlock(nextCtx, offsetX + col, offsetY + row, color);
+                        const x = (offsetX + col) * nextBlockSize;
+                        const y = (offsetY + row) * nextBlockSize;
+                        nextCtx.fillStyle = color;
+                        nextCtx.fillRect(x + 1, y + 1, nextBlockSize - 2, nextBlockSize - 2);
                     }
                 }
             }
@@ -528,16 +818,16 @@
                 x * BLOCK_SIZE + padding,
                 y * BLOCK_SIZE + padding,
                 BLOCK_SIZE - padding * 2,
-                4
+                3
             );
 
             // シャドウ
             context.fillStyle = 'rgba(0, 0, 0, 0.3)';
             context.fillRect(
                 x * BLOCK_SIZE + padding,
-                y * BLOCK_SIZE + BLOCK_SIZE - padding - 4,
+                y * BLOCK_SIZE + BLOCK_SIZE - padding - 3,
                 BLOCK_SIZE - padding * 2,
-                4
+                3
             );
         }
 
